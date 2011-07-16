@@ -1,0 +1,39 @@
+<project name="PistonsBreakBlocksOverWater" default="deploy" basedir=".">
+	<property name="pluginname" value="PistonsBreakBlocksOverWater"/>
+	<property name="bukkit.jar" location="../bukkit-0.0.1-SNAPSHOT.jar"/>
+	<property name="plugins" location="../../server/plugins/"/>
+
+	<property name="src" location="src"/>
+	<property name="resources" location="resources"/>
+	<property name="bin" location="bin"/>
+	<property name="dist" location="dist"/>
+
+	<target name="init">
+		<mkdir dir="${bin}"/>
+	</target>
+
+	<target name="compile" depends="init">
+		<javac srcdir="${src}" destdir="${bin}" includeantruntime="false">
+			<classpath>
+				<pathelement location="${bukkit.jar}"/>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="dist" depends="compile">
+		<mkdir dir="${dist}"/>
+		<jar jarfile="${dist}/${pluginname}.jar">
+			<fileset dir="${bin}"/>
+			<fileset file="${resources}/plugin.yml"/>
+		</jar>
+	</target>
+
+	<target name="deploy" depends="dist">
+		<copy file="${dist}/${pluginname}.jar" todir="${plugins}"/>
+	</target>
+
+	<target name="clean">
+		<delete dir="${bin}"/>
+		<delete dir="${dist}"/>
+	</target>
+</project>
