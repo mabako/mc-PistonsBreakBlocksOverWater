@@ -1,12 +1,12 @@
 package net.mabako.minecraft.PistonsBreakBlocksOverWater;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.event.block.BlockListener;
-import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -28,84 +28,72 @@ public class PistonsBlockListener extends BlockListener
 	}
 
 	/**
-	 * The main part - where the blocks are destroyed and items dropped
+	 * Pistons extend, whoo. Needs a check for each block
 	 */
 	@Override
-	public void onBlockPhysics( BlockPhysicsEvent event )
+	public void onBlockPistonExtend( BlockPistonExtendEvent event )
 	{
-		if( event.isCancelled( ) )
-			return;
-		
-		Block block = event.getBlock( );
-		if( block.getType( ) == Material.PISTON_STICKY_BASE || block.getType( ) == Material.PISTON_BASE )
+		if( !event.isCancelled( ) )
 		{
-			// This is for the piston withdrawing
-			BlockFace face;
-			switch( block.getData( ) )
+			for( Block block : event.getBlocks( ) )
 			{
-				case 0:
-					face = BlockFace.DOWN;
-					break;
-				case 1:
-					face = BlockFace.UP;
-					break;
-				case 2:
-					face = BlockFace.EAST;
-					break;
-				case 3:
-					face = BlockFace.WEST;
-					break;
-				case 4:
-					face = BlockFace.NORTH;
-					break;
-				case 5:
-					face = BlockFace.SOUTH;
-					break;
-				default:
-					return;
+				processBlock( block, event.getDirection( ) );
 			}
-
-			block = block.getFace( face );
 		}
-		else if( event.getChangedType( ) == Material.PISTON_EXTENSION )
+	}
+	
+	/**
+	 * Pistons retract, only sticky pistons matter
+	 */
+	@Override
+	public void onBlockPistonRetract( BlockPistonRetractEvent event )
+	{
+		if( !event.isCancelled( ) && event.isSticky( ) )
 		{
-			// Piston extending, we can use the block given by the event
-		}
-		else
-			return;
-
-		Block below = block.getFace( BlockFace.DOWN );
-		if( ( below.getType( ) == Material.WATER || below.getType( ) == Material.STATIONARY_WATER ) && canDropBlock( block ) )
-		{
-			// Save all data
-			final Location location = block.getLocation( );
-			final Material material = block.getType( );
-			final byte data = block.getData( );
-			
-			// Add a new Thread
-			instance.getServer( ).getScheduler( ).scheduleSyncDelayedTask( instance, new Runnable( )
-			{
-				public void run( )
-				{
-					// Check if the block is still the same
-					// Check via air seems necessary, or it'll corrupt the chunk(?) -> ItemStack with Air won't work -> invalid packet
-					Block blocky = location.getBlock( );
-					if( blocky.getType( ) != material || blocky.getData( ) != data )
-						return;
-					if( !canDropBlock( blocky ) )
-						return;
-					
-					// Turn the block into air
-					blocky.setType( Material.AIR );
-
-					// Drop the item
-					World world = location.getWorld( );
-					world.dropItemNaturally( location, new ItemStack( material, 1, (short) 0, data ) );
-				}
-			}, 1 );
+			processBlock( event.getBlock( ).getRelative( event.getDirection( ), 2 ), event.getDirection( ).getOppositeFace( ) );
 		}
 	}
 
+	public void processBlock( Block block, BlockFace blockFace )
+	{
+		final Block targetBlock = block.getRelative( blockFace );
+		Block below = targetBlock.getRelative( BlockFace.DOWN );
+		if( canDropBlock( block ) )
+		{
+			if( below.getType( ) == Material.WATER || below.getType( ) == Material.STATIONARY_WATER )
+			{
+				// Save all data
+				final Material material = block.getType( );
+				final byte data = block.getData( );
+				
+				// Add a new Thread
+				instance.getServer( ).getScheduler( ).scheduleSyncDelayedTask( instance, new Runnable( )
+				{
+					public void run( )
+					{
+						// Check if the block is still the same
+						// Check via air seems necessary, or it'll corrupt the chunk(?) -> ItemStack with Air won't work -> invalid packet
+						
+						if( targetBlock.getType( ) != material || targetBlock.getData( ) != data )
+						{
+							instance.getServer( ).getLogger( ).warning( "PistonsBreakBlocksOverWater: Block expected to be " + material.getId( ) + ":" + data + " but is " + targetBlock.getTypeId( ) + ":" + targetBlock.getData( ) + "." );
+							return;
+						}
+						if( !canDropBlock( targetBlock ) )
+							return;
+						
+						// Turn the block into air
+						targetBlock.setType( Material.AIR );
+
+						// Drop the item
+						World world = targetBlock.getWorld( );
+						world.dropItemNaturally( targetBlock.getLocation( ), new ItemStack( material, 1, (short) 0, data ) );
+					}
+				}, 10 );
+			}
+		}
+	}
+	
 	private boolean canDropBlock( Block block )
 	{
 		switch( block.getType( ) )
@@ -113,6 +101,8 @@ public class PistonsBlockListener extends BlockListener
 			case AIR:
 			case LAVA:
 			case WATER:
+			case PISTON_EXTENSION:
+			case PISTON_MOVING_PIECE:
 			case STATIONARY_LAVA:
 			case STATIONARY_WATER:
 				return false;

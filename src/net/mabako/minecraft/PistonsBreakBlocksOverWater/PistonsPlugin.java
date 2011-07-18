@@ -28,7 +28,8 @@ public class PistonsPlugin extends JavaPlugin
 		// Register all relevant events
 		PluginManager pm = getServer( ).getPluginManager( );
 
-		pm.registerEvent( Event.Type.BLOCK_PHYSICS, blockListener, Priority.Normal, this );
+		pm.registerEvent( Event.Type.BLOCK_PISTON_EXTEND, blockListener, Priority.Normal, this );
+		pm.registerEvent( Event.Type.BLOCK_PISTON_RETRACT, blockListener, Priority.Normal, this );
 
 		// Output a message
 		PluginDescriptionFile pdfFile = this.getDescription( );
