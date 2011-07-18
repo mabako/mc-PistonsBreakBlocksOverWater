@@ -33,6 +33,9 @@ public class PistonsBlockListener extends BlockListener
 	@Override
 	public void onBlockPhysics( BlockPhysicsEvent event )
 	{
+		if( event.isCancelled( ) )
+			return;
+		
 		Block block = event.getBlock( );
 		if( block.getType( ) == Material.PISTON_STICKY_BASE || block.getType( ) == Material.PISTON_BASE )
 		{
