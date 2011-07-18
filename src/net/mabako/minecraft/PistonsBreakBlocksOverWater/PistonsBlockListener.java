@@ -87,9 +87,18 @@ public class PistonsBlockListener extends BlockListener
 					// Check if the block is still the same
 					// Check via air seems necessary, or it'll corrupt the chunk(?) -> ItemStack with Air won't work -> invalid packet
 					Block blocky = location.getBlock( );
-					if( blocky.getType( ) != material || blocky.getData( ) != data || blocky.getType( ) == Material.AIR )
+					if( blocky.getType( ) != material || blocky.getData( ) != data )
 						return;
-
+					switch( blocky.getType( ) )
+					{
+						case AIR:
+						case LAVA:
+						case WATER:
+						case STATIONARY_LAVA:
+						case STATIONARY_WATER:
+							return;
+					}
+					
 					// Turn the block into air
 					blocky.setType( Material.AIR );
 
