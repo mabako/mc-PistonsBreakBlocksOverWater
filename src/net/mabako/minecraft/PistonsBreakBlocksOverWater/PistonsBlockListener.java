@@ -75,7 +75,7 @@ public class PistonsBlockListener extends BlockListener
 			return;
 
 		Block below = block.getFace( BlockFace.DOWN );
-		if( below.getType( ) == Material.WATER || below.getType( ) == Material.STATIONARY_WATER )
+		if( ( below.getType( ) == Material.WATER || below.getType( ) == Material.STATIONARY_WATER ) && canDropBlock( block ) )
 		{
 			// Save all data
 			final Location location = block.getLocation( );
@@ -92,15 +92,8 @@ public class PistonsBlockListener extends BlockListener
 					Block blocky = location.getBlock( );
 					if( blocky.getType( ) != material || blocky.getData( ) != data )
 						return;
-					switch( blocky.getType( ) )
-					{
-						case AIR:
-						case LAVA:
-						case WATER:
-						case STATIONARY_LAVA:
-						case STATIONARY_WATER:
-							return;
-					}
+					if( !canDropBlock( blocky ) )
+						return;
 					
 					// Turn the block into air
 					blocky.setType( Material.AIR );
@@ -111,5 +104,19 @@ public class PistonsBlockListener extends BlockListener
 				}
 			}, 1 );
 		}
+	}
+
+	private boolean canDropBlock( Block block )
+	{
+		switch( block.getType( ) )
+		{
+			case AIR:
+			case LAVA:
+			case WATER:
+			case STATIONARY_LAVA:
+			case STATIONARY_WATER:
+				return false;
+		}
+		return true;
 	}
 }

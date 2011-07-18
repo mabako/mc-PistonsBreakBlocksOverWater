@@ -2,5 +2,5 @@ name: Pistons Break Blocks Over Water
 main: net.mabako.minecraft.PistonsBreakBlocksOverWater.PistonsPlugin
 website: http://minecraft.mabako.net
 author: mabako (mabako@gmail.com)
-version: 1.02
+version: 1.03
 description: Breaks blocks into Items when they're pushed or pulled over or water by a piston
